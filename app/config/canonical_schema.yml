@@ -1,0 +1,370 @@
+version: "2.0"
+
+dataset:
+  domain: retail
+  supported_granularity:
+    - transaction
+    - invoice
+    - daily
+    - monthly
+
+metadata:
+  timezone: "Asia/Kolkata"
+  default_currency: "INR"
+  supported_currencies:
+    - INR
+    - USD
+    - EUR
+  encoding: "utf-8"
+
+schema_registry:
+  backward_compatible: true
+  migration_supported: true
+
+cleaning_rules:
+  lowercase_headers: true
+  trim_whitespace: true
+  remove_currency_symbols: true
+  remove_thousands_separator: true
+  normalize_column_names: true
+  replace_empty_strings_with_null: true
+
+matching:
+  fuzzy_matching: true
+  similarity_threshold: 0.85
+  embedding_matching: false
+
+canonical_fields:
+
+  sales:
+    canonical_name: "sales"
+
+    aliases:
+      - sales
+      - revenue
+      - total_sales
+      - total_revenue
+      - sales_amount
+      - revenue_amount
+      - gross_sales
+      - net_sales
+      - amount
+      - sale_amt
+
+    description: "Total sales or revenue amount."
+
+    semantic_type: "metric"
+    category: "financial"
+    parent_domain: "revenue"
+
+    importance: "critical"
+
+    datatype: "float64"
+
+    nullable: false
+
+    currency_aware: true
+
+    cleaning:
+      remove_currency_symbols: true
+      remove_thousands_separator: true
+
+    validation:
+      min: 0
+      max: 100000000
+
+  product:
+    canonical_name: "product"
+
+    aliases:
+      - product
+      - product_name
+      - item
+      - item_name
+      - sku
+      - sku_id
+      - product_id
+      - item_code
+
+    description: "Product name or identifier."
+
+    semantic_type: "dimension"
+    category: "product_dimension"
+    parent_domain: "inventory"
+
+    importance: "critical"
+
+    datatype: "string"
+
+    nullable: false
+
+    cleaning:
+      trim_whitespace: true
+
+    validation:
+      min_length: 1
+
+  customer:
+    canonical_name: "customer"
+
+    aliases:
+      - customer
+      - customer_name
+      - customer_id
+      - client
+      - client_name
+      - buyer
+      - consumer
+
+    description: "Customer name or identifier."
+
+    semantic_type: "dimension"
+    category: "customer_dimension"
+    parent_domain: "crm"
+
+    importance: "critical"
+
+    datatype: "string"
+
+    nullable: false
+
+    cleaning:
+      trim_whitespace: true
+
+  date:
+    canonical_name: "date"
+
+    aliases:
+      - date
+      - order_date
+      - purchase_date
+      - transaction_date
+      - invoice_date
+      - created_at
+
+    description: "Date of transaction."
+
+    semantic_type: "time_dimension"
+    category: "temporal"
+    parent_domain: "time"
+
+    importance: "critical"
+
+    datatype: "datetime"
+
+    nullable: false
+
+    accepted_formats:
+      - "%Y-%m-%d"
+      - "%d-%m-%Y"
+      - "%m/%d/%Y"
+      - "%d/%m/%Y"
+      - "%Y/%m/%d"
+
+    derive:
+      - year
+      - month
+      - quarter
+      - weekday
+      - week
+      - day_name
+
+    validation:
+      past_date: true
+
+  quantity:
+    canonical_name: "quantity"
+
+    aliases:
+      - quantity
+      - qty
+      - units_sold
+      - unit_count
+      - items_sold
+
+    description: "Number of units sold."
+
+    semantic_type: "metric"
+    category: "inventory"
+    parent_domain: "sales"
+
+    importance: "recommended"
+
+    datatype: "int64"
+
+    nullable: true
+
+    validation:
+      min: 0
+      integer: true
+
+  price:
+    canonical_name: "price"
+
+    aliases:
+      - price
+      - unit_price
+      - item_price
+      - selling_price
+      - cost_per_unit
+
+    description: "Price per unit."
+
+    semantic_type: "metric"
+    category: "financial"
+    parent_domain: "pricing"
+
+    importance: "recommended"
+
+    datatype: "float64"
+
+    nullable: true
+
+    currency_aware: true
+
+    validation:
+      min: 0
+
+datatype_schema:
+  sales: float64
+  product: string
+  customer: string
+  date: datetime
+  quantity: int64
+  price: float64
+
+required_columns:
+  - sales
+  - product
+  - customer
+  - date
+
+validation_rules:
+
+  sales:
+    min: 0
+    max: 100000000
+    not_null: true
+    datatype: float64
+
+  quantity:
+    min: 0
+    integer: true
+    not_null: false
+    datatype: int64
+
+  date:
+    not_null: true
+    past_date: true
+    datatype: datetime
+
+  product:
+    not_null: true
+
+  customer:
+    not_null: true
+
+parsing:
+  auto_detect_delimiter: true
+  supported_delimiters:
+    - ","
+    - ";"
+    - "\t"
+
+  date_parsing:
+    infer_datetime_format: true
+    dayfirst: false
+
+  currency_parsing:
+    enabled: true
+
+feature_engineering:
+
+  enabled: true
+
+  derived_features:
+    - revenue_per_customer
+    - average_order_value
+    - monthly_sales
+    - quarterly_sales
+    - yearly_sales
+    - sales_growth
+    - transaction_value
+
+anomaly_detection:
+
+  enabled: true
+
+  methods:
+    - zscore
+    - iqr
+
+  zscore_threshold: 3
+
+  business_rules:
+    negative_sales: true
+    future_dates: true
+    zero_quantity_check: true
+
+deduplication:
+
+  enabled: true
+
+  subset:
+    - customer
+    - product
+    - date
+
+analytics:
+
+  enabled: true
+
+  auto_insights:
+    - top_products
+    - top_customers
+    - sales_trends
+    - seasonal_analysis
+    - customer_segmentation
+    - revenue_growth
+    - category_performance
+
+insight_generation:
+
+  enabled: true
+
+  narrative_ai: true
+
+  summary_templates:
+    sales_growth: true
+    customer_behavior: true
+    anomaly_summary: true
+
+ai_settings:
+
+  forecasting:
+    enabled: true
+
+  recommendation_engine:
+    enabled: true
+
+  churn_prediction:
+    enabled: false
+
+data_quality_scoring:
+
+  enabled: true
+
+  weights:
+    missing_values: 0.3
+    datatype_errors: 0.3
+    duplicates: 0.2
+    anomalies: 0.2
+
+ingestion_rules:
+
+  allow_missing_optional_columns: true
+  reject_duplicate_headers: true
+  max_file_size_mb: 100
+  supported_file_formats:
+    - csv
+    - xlsx
