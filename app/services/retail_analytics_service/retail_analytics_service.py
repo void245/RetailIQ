@@ -3,6 +3,7 @@ import logging
 from app.services.retail_analytics_service.modules.revenue_analytics import RevenueAnalytics
 from app.services.retail_analytics_service.modules.product_analytics import ProductAnalytics
 from app.services.retail_analytics_service.modules.customer_analytics import CustomerAnalytics
+from app.services.retail_analytics_service.modules.time_series_analytics import TimeSeriesAnalytics
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +29,7 @@ class RetailAnalyticsService:
         self.revenue_analytics = RevenueAnalytics(df)
         self.product_analytics = ProductAnalytics(df)
         self.customer_analytics = CustomerAnalytics(df)
+        self.time_series_analytics = TimeSeriesAnalytics(df)
         
         logger.info(f"RetailAnalyticsService initialized with {len(df)} records")
 
@@ -45,6 +47,7 @@ class RetailAnalyticsService:
             revenue_results = self.revenue_analytics.analyze()
             product_results = self.product_analytics.analyze()
             customer_results = self.customer_analytics.analyze()
+            time_series_results = self.time_series_analytics.analyze()
             
             # Aggregate results
             self.results = {
@@ -57,6 +60,7 @@ class RetailAnalyticsService:
                 'revenue_analytics': revenue_results,
                 'product_analytics': product_results,
                 'customer_analytics': customer_results,
+                'time_series_analytics': time_series_results,
                 'executive_summary': self._generate_executive_summary(revenue_results, product_results, customer_results)
             }
             
@@ -81,6 +85,11 @@ class RetailAnalyticsService:
         """Execute customer analysis only."""
         logger.info("Starting customer analytics...")
         return self.customer_analytics.analyze()
+
+    def analyze_timeseries_only(self):
+        """Execute time-series analysis only."""
+        logger.info("Starting time-series analytics...")
+        return self.time_series_analytics.analyze()
 
     def _get_date_range(self):
         """Get date range from data if available."""

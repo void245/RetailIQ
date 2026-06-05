@@ -117,7 +117,7 @@ class CustomerAnalytics :
 
             # CLV STATISTICS
             total_clv = customer_revenue.sum()
-            avg_clv = customer_revenue.sum()
+            avg_clv = customer_revenue.mean()
             median_clv = customer_revenue.median()
             max_clv = customer_revenue.max()
             min_clv = customer_revenue.min()
@@ -169,7 +169,7 @@ class CustomerAnalytics :
 
             repeat_purchase_rate = (repeat_customers / total_customers) * 100 if total_customers > 0 else 0
 
-            avg_repeat_purchase = transactions_per_customer[transactions_per_customer] >= 2 .mean()
+            avg_repeat_purchase = transactions_per_customer[transactions_per_customer >= 2].mean()
 
             purchase_frequency = transactions_per_customer.value_counts().sort_index()
 
@@ -216,7 +216,7 @@ class CustomerAnalytics :
 
             min_date = self.df[date_col].min()
             max_date = self.df[date_col].max()
-            total_period = (min_date - max_date).days
+            total_period = (max_date - min_date).days
 
             # split into period: first and last
             midpoint_date = min_date + timedelta(days=total_period/2)
@@ -285,7 +285,7 @@ class CustomerAnalytics :
             # create cohort (month of first purchase)
 
             first_purchase_date_copy = first_purchase_date.copy()
-            cohort_month = first_purchase_date_copy.df.to_period('M')
+            cohort_month = first_purchase_date_copy.dt.to_period('M')
 
             # add cohort to dataframe
             customer_cohort = pd.DataFrame({
@@ -296,7 +296,7 @@ class CustomerAnalytics :
             df_with_cohort = self.df.merge(customer_cohort, left_on = customer_id_col, right_on='customer_id', how = 'left')
 
             # transaction month
-            df_with_cohort['transaction_month'] = df_with_cohort[date_col].dt.to_peroid('M')
+            df_with_cohort['transaction_month'] = df_with_cohort[date_col].dt.to_period('M')
 
             # Calculate customer age in months
             df_with_cohort['customer_age_months'] = (df_with_cohort['transaction_month'] - df_with_cohort['cohort_month']).apply(lambda x: x.n)
